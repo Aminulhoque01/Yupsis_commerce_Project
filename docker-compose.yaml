@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: yupsis_postgres
+    restart: on-failure
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: database
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: yupsis_pgadmin
+    restart: on-failure
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5052:80"
+      - "5053:443"
+    depends_on:
+      - postgres
+
+
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: yupsis_mailhog
+     
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    
+    volumes:
+      - mailhog:/var/lib/mailhog
+
+volumes:
+  postgres:
+  mailhog:
