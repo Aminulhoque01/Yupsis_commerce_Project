@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AccountStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+
+model User{
+  id        String   @id @default(cuid())
+  name       String
+  email      String   @unique
+  password   String
+  
+  role       Role     @default(USER)
+  verified   Boolean  @default(false)
+  status     AccountStatus @default(PENDING)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  loginHistories LoginHistory[]
+  verificationCodes verificationCode[]
+}
+
+enum LoginAttemp {
+  SUCCESS
+  FAILED
+}
+
+model LoginHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  ipAddress String?
+  userAgent String?
+  attempt   LoginAttemp @default(SUCCESS)
+  loginAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  EXPIRED
+}
+
+enum VerificationType {
+  EMAIL_CHANGE
+  PASSWORD_RESET
+  ACCOUNT_ACTIVATION
+  PHONE_CHANGE
+  TWO_FACTOR_AUTH
+  EMAIL_VERIFICATION
+}
+
+model verificationCode {
+  id        String   @id @default(cuid())
+  userId    String
+  code      String
+  status    VerificationStatus @default(PENDING)
+  type      VerificationType @default(ACCOUNT_ACTIVATION)
+  issuedAt  DateTime @default(now())
+  verifiedAt DateTime?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, code])
+}
